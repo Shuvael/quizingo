@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useWebSocket } from "@/app/hooks/useWebSocket";
+import { useMediaQuery } from "@/app/hooks/useMediaQuery";
 import BingoBoard from "@/app/components/BingoBoard";
 import Frage from "@/app/components/Frage";
 import GewinnScreen from "@/app/components/GewinnScreen";
@@ -8,9 +9,10 @@ import Lobby from "@/app/components/Lobby";
 import Ranking from "@/app/components/Ranking";
 import QuirkPanel from "@/app/components/QuirkPanel";
 import BlockadeModal from "@/app/components/BlockadeModal";
+import FeldwahlModal from "@/app/components/FeldwahlModal";
 import Benachrichtigungen from "@/app/components/Benachrichtigungen";
 import AktiveEffekte from "@/app/components/AktiveEffekte";
-import FeldwahlModal from "./components/FeldwahlModal";
+import MobileSpielLayout from "@/app/components/MobileSpielLayout";
 
 function generiereSpielerId() {
   return Math.random().toString(36).substring(2, 10);
@@ -26,6 +28,8 @@ export default function Home() {
   const [raumCode, setRaumCode] = useState("");
   const [eingabeCode, setEingabeCode] = useState("");
   const [blockadeOffen, setBlockadeOffen] = useState(false);
+  const [feldwahlOffen, setFeldwahlOffen] = useState(false);
+  const istMobil = useMediaQuery("(max-width: 768px)");
 
   const spiel = useWebSocket(
     ansicht === "spiel" ? raumCode : null,
@@ -34,7 +38,8 @@ export default function Home() {
   );
 
   const raumErstellen = async () => {
-const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/raum/erstellen`, {      method: "POST",
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/raum/erstellen`, {
+      method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: spielerName }),
     });
@@ -55,11 +60,6 @@ const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/raum/erstellen`,
       return;
     }
     spiel.setzeQuirkEin(quirkId, zielId);
-  };
-
-  const handleBlockadeZiel = (zielId) => {
-    setBlockadeOffen(false);
-    spiel.setzeQuirkEin("blockade", zielId);
   };
 
   // --- Start-Screen ---
@@ -102,7 +102,34 @@ const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/raum/erstellen`,
     );
   }
 
-  // --- Spiel-Screen ---
+  // --- Lobby ---
+  if (!spiel.gestartet) {
+    return (
+      <main className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-8 gap-8">
+        <h1 className="text-3xl font-bold text-white">Quizingo</h1>
+        <Lobby
+          raumCode={raumCode}
+          spieler={spiel.spieler}
+          verbunden={spiel.verbunden}
+          onStart={spiel.starteSpiel}
+        />
+      </main>
+    );
+  }
+
+  // --- Mobiles Spiel-Layout ---
+  if (istMobil) {
+    return (
+      <MobileSpielLayout
+        spiel={spiel}
+        spielerId={spielerId}
+        zahlen={zahlen}
+        onNeustart={() => setAnsicht("start")}
+      />
+    );
+  }
+
+  // --- Desktop Spiel-Layout ---
   return (
     <main className="min-h-screen bg-gray-900 text-white p-4">
       <Benachrichtigungen benachrichtigungen={spiel.benachrichtigungen} />
@@ -111,55 +138,37 @@ const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/raum/erstellen`,
         <BlockadeModal
           ranking={spiel.ranking}
           eigeneId={spielerId}
-          onAuswahl={handleBlockadeZiel}
+          onAuswahl={(zielId) => { setBlockadeOffen(false); spiel.setzeQuirkEin("blockade", zielId); }}
           onAbbrechen={() => setBlockadeOffen(false)}
         />
       )}
 
-      {spiel.feldwahlAktiv && (
+      {feldwahlOffen && (
         <FeldwahlModal
           zahlen={zahlen}
           markiert={spiel.markiert}
-          onAuswahl={(feldIndex) => spiel.sendeFieldwahl(feldIndex)}
-          onAbbrechen={() => {/* feldwahlAktiv zurücksetzen */ }}
+          onAuswahl={(feldIndex) => { setFeldwahlOffen(false); spiel.sendeFieldwahl(feldIndex); }}
+          onAbbrechen={() => setFeldwahlOffen(false)}
         />
       )}
 
       <div className="flex flex-col items-center gap-2 mb-6">
         <h1 className="text-3xl font-bold">Quizingo</h1>
-        {spiel.gestartet && (
-          <div className="flex items-center gap-3 text-sm">
-            <span className="text-yellow-400 font-bold">🪙 {spiel.coins}</span>
-            <AktiveEffekte effekte={spiel.aktiveEffekte} />
-          </div>
-        )}
+        <div className="flex items-center gap-3 text-sm">
+          <span className="text-yellow-400 font-bold">🪙 {spiel.coins}</span>
+          <AktiveEffekte effekte={spiel.aktiveEffekte} />
+        </div>
       </div>
 
       {spiel.bingo ? (
         <div className="flex justify-center">
-          <GewinnScreen
-            gewinner={spiel.bingo.gewinner}
-            onNeustart={() => setAnsicht("start")}
-          />
-        </div>
-      ) : !spiel.gestartet ? (
-        <div className="flex justify-center">
-          <Lobby
-            raumCode={raumCode}
-            spieler={spiel.spieler}
-            verbunden={spiel.verbunden}
-            onStart={spiel.starteSpiel}
-          />
+          <GewinnScreen gewinner={spiel.bingo.gewinner} onNeustart={() => setAnsicht("start")} />
         </div>
       ) : (
         <div className="flex flex-col lg:flex-row gap-6 justify-center items-start max-w-6xl mx-auto">
-
-          {/* Linke Spalte – Ranking */}
           <div className="w-full lg:w-64 flex-shrink-0">
             <Ranking ranking={spiel.ranking} eigeneId={spielerId} />
           </div>
-
-          {/* Mitte – Frage + Board */}
           <div className="flex flex-col items-center gap-6 flex-1">
             <Frage
               frage={spiel.aktiveFrage}
@@ -170,8 +179,6 @@ const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/raum/erstellen`,
             />
             <BingoBoard zahlen={zahlen} markiert={spiel.markiert} />
           </div>
-
-          {/* Rechte Spalte – Quirks */}
           <div className="w-full lg:w-64 flex-shrink-0">
             <QuirkPanel
               quirkDefinitionen={spiel.quirkDefinitionen}
@@ -180,11 +187,9 @@ const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/raum/erstellen`,
               ranking={spiel.ranking}
               eigeneId={spielerId}
               onQuirkEinsetzen={handleQuirkEinsetzen}
-              hasFeedback={spiel.feedback !== null}
               hatGeantwortet={spiel.hatGeantwortet}
             />
           </div>
-
         </div>
       )}
     </main>
