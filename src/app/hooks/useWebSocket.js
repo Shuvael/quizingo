@@ -34,7 +34,7 @@ export function useWebSocket(raumCode, spielerId, name) {
         if (!raumCode || !spielerId) return;
 
         const encodedName = encodeURIComponent(name || "Spieler");
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
         const wsUrl = backendUrl.replace("https://", "wss://").replace("http://", "ws://");
 
         ws.current = new WebSocket(
