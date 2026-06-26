@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useWebSocket } from "@/app/hooks/useWebSocket";
 import { useMediaQuery } from "@/app/hooks/useMediaQuery";
+import { useSpielfortschritt } from "./hooks/useSpielfortschritt";
 import BingoBoard from "@/app/components/BingoBoard";
 import Frage from "@/app/components/Frage";
 import GewinnScreen from "@/app/components/GewinnScreen";
@@ -13,6 +14,8 @@ import FeldwahlModal from "@/app/components/FeldwahlModal";
 import Benachrichtigungen from "@/app/components/Benachrichtigungen";
 import AktiveEffekte from "@/app/components/AktiveEffekte";
 import MobileSpielLayout from "@/app/components/MobileSpielLayout";
+import KategorieUndSpracheAuswahl from "./components/KategorieUndSpracheAuswahl";
+import FreischaltModal from "./components/FreiSchaltModal";
 
 function generiereSpielerId() {
   return Math.random().toString(36).substring(2, 10);
@@ -29,6 +32,9 @@ export default function Home() {
   const [eingabeCode, setEingabeCode] = useState("");
   const [blockadeOffen, setBlockadeOffen] = useState(false);
   const [feldwahlOffen, setFeldwahlOffen] = useState(false);
+  const [gewaehteKategorie, setGewaehlteKategorie] = useState("allgemein");
+  const [gewaehlteSprache, setGewaehlteSprache] = useState("en");
+  const fortschritt = useSpielfortschritt();
   const istMobil = useMediaQuery("(max-width: 768px)");
 
   const spiel = useWebSocket(
@@ -41,7 +47,11 @@ export default function Home() {
     const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/raum/erstellen`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: spielerName }),
+      body: JSON.stringify({
+        name: spielerName,
+        kategorie: gewaehteKategorie,
+        sprache: gewaehlteSprache,
+      }),
     });
     const data = await res.json();
     setRaumCode(data.code);
@@ -62,6 +72,11 @@ export default function Home() {
     spiel.setzeQuirkEin(quirkId, zielId);
   };
 
+  const handleNeustart = () => {
+    fortschritt.spielBeendet();
+    setAnsicht("start");
+  }
+
   // --- Start-Screen ---
   if (ansicht === "start") {
     return (
@@ -74,6 +89,19 @@ export default function Home() {
             placeholder="Dein Name"
             className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 w-full"
           />
+          <KategorieUndSpracheAuswahl
+            freigeschaltet={fortschritt.freigeschaltet}
+            gewaehlteKategorie={gewaehlteKategorie}
+            gewaehlteSprache={gewaehlteSprache}
+            onKategorieWahl={setGewaehlteKategorie}
+            onSpracheWahl={setGewaehlteSprache}
+          />
+          {fortschritt.freischaltAngebot && (
+            <FreischaltModal
+              optionen={fortschritt.freischaltAngebot.optionen}
+              onAuswahl={fortschritt.kategorieFreischalten}
+            />
+          )}
           <button
             onClick={raumErstellen}
             disabled={!spielerName.trim()}
