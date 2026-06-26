@@ -34,8 +34,11 @@ export function useWebSocket(raumCode, spielerId, name) {
         if (!raumCode || !spielerId) return;
 
         const encodedName = encodeURIComponent(name || "Spieler");
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+        const wsUrl = backendUrl.replace("https://", "wss://").replace("http://", "ws://");
+
         ws.current = new WebSocket(
-            `ws://localhost:8000/ws/${raumCode}/${spielerId}?name=${encodedName}`
+            `${wsUrl}/ws/${raumCode}/${spielerId}?name=${encodedName}`
         );
 
         ws.current.onopen = () => setVerbunden(true);
@@ -170,6 +173,10 @@ export function useWebSocket(raumCode, spielerId, name) {
                     }
                     if (nachricht.richtig === true) setFeedback("richtig");
                     else if (nachricht.richtig === false) setFeedback("falsch");
+                    break;
+
+                case "system_nachricht":
+                    zeigeBenachrichtigung(nachricht.text, "blau");
                     break;
 
                 default:
