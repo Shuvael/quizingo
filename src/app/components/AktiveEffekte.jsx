@@ -3,7 +3,6 @@ export default function AktiveEffekte({ effekte }) {
 
   const icons = {
     schutzschild: "🛡️ Schutzschild aktiv",
-    doppelpunkte: "✨ Doppelpunkte aktiv",
   };
 
   return (

@@ -38,6 +38,12 @@ export default function Frage({ frage, feedback, onAntwort, timer, jokerOptionen
       {feedback === "richtig" && <p className="mt-4 font-semibold text-green-400">✓ Richtig!</p>}
       {feedback === "falsch" && <p className="mt-4 font-semibold text-red-400">✗ Falsch!</p>}
       {feedback === "zeit" && <p className="mt-4 font-semibold text-yellow-400">⏱ Zeit abgelaufen!</p>}
+
+      {antwortStatistik && feedback && (
+        <p className="mt-2 text-gray-400 text-sm">
+          {antwortStatistik.richtig} von {antwortStatistik.gesamt} haben es gewusst
+        </p>
+      )}
     </div>
   );
 }

@@ -19,8 +19,8 @@ export function useWebSocket(raumCode, spielerId, name) {
     const [benachrichtigungen, setBenachrichtigungen] = useState([]); // Toast-Nachrichten
     const [aktiveEffekte, setAktiveEffekte] = useState([]); // schutzschild, doppelpunkte
     const { timer, starten: timerStarten, stoppen: timerStoppen } = useTimer(20);
-    const [feldwahlAktiv, setFeldwahlAktiv] = useState(false);
     const [hatGeantwortet, setHatGeantwortet] = useState(false);
+    const [antwortStatistik, setAntwortStatistik] = useState(null);
 
     const zeigeBenachrichtigung = useCallback((text, farbe = "blau") => {
         const id = Date.now();
@@ -52,6 +52,7 @@ export function useWebSocket(raumCode, spielerId, name) {
                     break;
 
                 case "frage":
+                    setAntwortStatistik(null);
                     setAktiveFrage(nachricht.frage);
                     setJokerOptionen(null);
                     setGestartet(true);
@@ -87,16 +88,17 @@ export function useWebSocket(raumCode, spielerId, name) {
                     });
                     break;
 
+                case "antwort_statistik":
+                    setAntwortStatistik({
+                        richtig: nachricht.richtige_anzahl,
+                        gesamt: nachricht.gesamt_anzahl,
+                    });
+                    break;
+
                 case "timer_abgelaufen":
                     timerStoppen();
                     setFeedback("zeit");
                     setJokerOptionen(null);
-                    break;
-
-                case "zeitdieb_aktiv":
-                    timerStoppen();
-                    timerStarten(5);
-                    zeigeBenachrichtigung(`⏱ ${nachricht.von} hat den Zeitdieb eingesetzt!`, "gelb");
                     break;
 
                 case "bingo_nachricht":
@@ -129,14 +131,6 @@ export function useWebSocket(raumCode, spielerId, name) {
                     zeigeBenachrichtigung("🚫 Blockade! Dein Feld wurde nicht markiert.", "rot");
                     break;
 
-                case "sabotage_erhalten":
-                    setCoins(nachricht.coins);
-                    zeigeBenachrichtigung(
-                        `💸 ${nachricht.von} hat dir ${nachricht.abzug} Coins gestohlen!`,
-                        "rot"
-                    );
-                    break;
-
                 case "schutzschild_aktiv":
                     setAktiveEffekte((prev) => [...prev, "schutzschild"]);
                     zeigeBenachrichtigung("🛡️ Schutzschild aktiv!", "gruen");
@@ -147,22 +141,8 @@ export function useWebSocket(raumCode, spielerId, name) {
                     zeigeBenachrichtigung("🛡️ Schutzschild hat einen Angriff abgewehrt!", "gruen");
                     break;
 
-                case "doppelpunkte_aktiv":
-                    setAktiveEffekte((prev) => [...prev, "doppelpunkte"]);
-                    zeigeBenachrichtigung("✨ Doppelpunkte aktiv!", "gruen");
-                    break;
-
                 case "fehler":
                     zeigeBenachrichtigung(nachricht.nachricht, "rot");
-                    break;
-
-                case "dreifachpunkte_aktiv":
-                    setAktiveEffekte((prev) => [...prev, "dreifachpunkte"]);
-                    zeigeBenachrichtigung("✨ Dreifachpunkte aktiv!", "gruen");
-                    break;
-
-                case "feldwahl_aktiv":
-                    setFeldwahlAktiv(true);
                     break;
 
                 case "board_update":
@@ -191,15 +171,6 @@ export function useWebSocket(raumCode, spielerId, name) {
             ws.current?.close();
         };
     }, [raumCode, spielerId, name]);
-
-    const sendeFieldwahl = useCallback((feldIndex) => {
-        ws.current?.send(JSON.stringify({
-            typ: "quirk",
-            quirk_id: "feldwahl",
-            feld_index: feldIndex,
-        }));
-        setFeldwahlAktiv(false);
-    }, []);
 
     const sendeAntwort = useCallback((antwortIndex) => {
         ws.current?.send(JSON.stringify({ typ: "antwort", antwort_index: antwortIndex }));
@@ -235,6 +206,7 @@ export function useWebSocket(raumCode, spielerId, name) {
         jokerOptionen,
         benachrichtigungen,
         aktiveEffekte,
+        antwortStatistik,
         sendeAntwort,
         starteSpiel,
         setzeQuirkEin,

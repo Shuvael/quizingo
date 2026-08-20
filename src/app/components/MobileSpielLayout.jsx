@@ -131,6 +131,25 @@ export default function MobileSpielLayout({
         )}
       </div>
 
+      {/* Eigenes Board in Modus B */}
+      {modus === "b" && (
+        <div className="mt-3 flex justify-center">
+          <div className="grid grid-cols-5 gap-1">
+            {zahlen.map((zahl, index) => (
+              <div
+                key={index}
+                className={`w-12 h-12 rounded-lg text-sm font-bold flex items-center justify-center
+            ${spiel.markiert.has(index)
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-700 text-gray-300"}`}
+              >
+                {zahl}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Quirk-Leiste unten */}
       <div className="px-3 pb-4 pt-2 border-t border-gray-800">
         <QuirkLeiste

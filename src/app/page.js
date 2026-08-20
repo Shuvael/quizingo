@@ -10,12 +10,12 @@ import Lobby from "@/app/components/Lobby";
 import Ranking from "@/app/components/Ranking";
 import QuirkPanel from "@/app/components/QuirkPanel";
 import BlockadeModal from "@/app/components/BlockadeModal";
-import FeldwahlModal from "@/app/components/FeldwahlModal";
 import Benachrichtigungen from "@/app/components/Benachrichtigungen";
 import AktiveEffekte from "@/app/components/AktiveEffekte";
 import MobileSpielLayout from "@/app/components/MobileSpielLayout";
 import KategorieUndSpracheAuswahl from "./components/KategorieUndSpracheAuswahl";
 import FreischaltModal from "./components/FreiSchaltModal";
+import ModusAuswahl from "./components/ModusAuswahl";
 
 function generiereSpielerId() {
   return Math.random().toString(36).substring(2, 10);
@@ -31,9 +31,12 @@ export default function Home() {
   const [raumCode, setRaumCode] = useState("");
   const [eingabeCode, setEingabeCode] = useState("");
   const [blockadeOffen, setBlockadeOffen] = useState(false);
-  const [feldwahlOffen, setFeldwahlOffen] = useState(false);
-  const [gewaehteKategorie, setGewaehlteKategorie] = useState("allgemein");
+  const [gewaehlteKategorie, setGewaehlteKategorie] = useState("allgemein");
   const [gewaehlteSprache, setGewaehlteSprache] = useState("en");
+  const [modus, setModus] = useState("a");
+  const [timerSekunden, setTimerSekunden] = useState(20);
+  const [autoWeiter, setAutoWeiter] = useState(true);
+
   const fortschritt = useSpielfortschritt();
   const istMobil = useMediaQuery("(max-width: 768px)");
 
@@ -49,8 +52,11 @@ export default function Home() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: spielerName,
-        kategorie: gewaehteKategorie,
+        kategorie: gewaehlteKategorie,
         sprache: gewaehlteSprache,
+        modus,
+        timer_sekunden: timerSekunden,
+        auto_weiter: autoWeiter,
       }),
     });
     const data = await res.json();
@@ -75,13 +81,21 @@ export default function Home() {
   const handleNeustart = () => {
     fortschritt.spielBeendet();
     setAnsicht("start");
-  }
+  };
 
   // --- Start-Screen ---
   if (ansicht === "start") {
     return (
-      <main className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-8 gap-8">
+      <main className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-8 gap-6">
         <h1 className="text-4xl font-bold text-white">Quizingo</h1>
+
+        {fortschritt.freischaltAngebot && (
+          <FreischaltModal
+            optionen={fortschritt.freischaltAngebot.optionen}
+            onAuswahl={fortschritt.kategorieFreischalten}
+          />
+        )}
+
         <div className="flex flex-col gap-4 w-full max-w-sm">
           <input
             value={spielerName}
@@ -89,6 +103,16 @@ export default function Home() {
             placeholder="Dein Name"
             className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 w-full"
           />
+
+          <ModusAuswahl
+            modus={modus}
+            timerSekunden={timerSekunden}
+            autoWeiter={autoWeiter}
+            onModusWahl={setModus}
+            onTimerWahl={setTimerSekunden}
+            onAutoWeiterWahl={setAutoWeiter}
+          />
+
           <KategorieUndSpracheAuswahl
             freigeschaltet={fortschritt.freigeschaltet}
             gewaehlteKategorie={gewaehlteKategorie}
@@ -96,12 +120,7 @@ export default function Home() {
             onKategorieWahl={setGewaehlteKategorie}
             onSpracheWahl={setGewaehlteSprache}
           />
-          {fortschritt.freischaltAngebot && (
-            <FreischaltModal
-              optionen={fortschritt.freischaltAngebot.optionen}
-              onAuswahl={fortschritt.kategorieFreischalten}
-            />
-          )}
+
           <button
             onClick={raumErstellen}
             disabled={!spielerName.trim()}
@@ -109,6 +128,7 @@ export default function Home() {
           >
             Neuen Raum erstellen
           </button>
+
           <div className="flex gap-2">
             <input
               value={eingabeCode}
@@ -140,6 +160,7 @@ export default function Home() {
           spieler={spiel.spieler}
           verbunden={spiel.verbunden}
           onStart={spiel.starteSpiel}
+          modus={modus}
         />
       </main>
     );
@@ -152,7 +173,8 @@ export default function Home() {
         spiel={spiel}
         spielerId={spielerId}
         zahlen={zahlen}
-        onNeustart={() => setAnsicht("start")}
+        modus={modus}
+        onNeustart={handleNeustart}
       />
     );
   }
@@ -166,17 +188,11 @@ export default function Home() {
         <BlockadeModal
           ranking={spiel.ranking}
           eigeneId={spielerId}
-          onAuswahl={(zielId) => { setBlockadeOffen(false); spiel.setzeQuirkEin("blockade", zielId); }}
+          onAuswahl={(zielId) => {
+            setBlockadeOffen(false);
+            spiel.setzeQuirkEin("blockade", zielId);
+          }}
           onAbbrechen={() => setBlockadeOffen(false)}
-        />
-      )}
-
-      {feldwahlOffen && (
-        <FeldwahlModal
-          zahlen={zahlen}
-          markiert={spiel.markiert}
-          onAuswahl={(feldIndex) => { setFeldwahlOffen(false); spiel.sendeFieldwahl(feldIndex); }}
-          onAbbrechen={() => setFeldwahlOffen(false)}
         />
       )}
 
@@ -190,7 +206,10 @@ export default function Home() {
 
       {spiel.bingo ? (
         <div className="flex justify-center">
-          <GewinnScreen gewinner={spiel.bingo.gewinner} onNeustart={() => setAnsicht("start")} />
+          <GewinnScreen
+            gewinner={spiel.bingo.gewinner}
+            onNeustart={handleNeustart}
+          />
         </div>
       ) : (
         <div className="flex flex-col lg:flex-row gap-6 justify-center items-start max-w-6xl mx-auto">
