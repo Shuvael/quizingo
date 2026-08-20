@@ -99,10 +99,21 @@ export default function HostScreen() {
           setRanking(nachricht.ranking);
           break;
 
+        case "spieler_liste":
+          setSpielerBoards(nachricht.spieler.map((spieler) => ({
+            id: spieler.id,
+            name: spieler.name,
+            markiert: spieler.markiert || [],
+            bingos: spieler.bingos || 0,
+            felder_bis_bingo: spieler.felder_bis_bingo || 25,
+            coins: spieler.coins || 0,
+          })));
+          break;
+
         case "host_update":
-          setSpielerBoards(nachricht.spieler_boards);
+          setSpielerBoards(nachricht.spieler_boards || []);
           setInPause(nachricht.in_pause);
-          nachricht.spieler_boards.forEach((s) => generiereZahlenFuerSpieler(s.id));
+          (nachricht.spieler_boards || []).forEach((s) => generiereZahlenFuerSpieler(s.id));
           break;
 
         case "antwort_statistik":
