@@ -7,11 +7,11 @@ export default function Benachrichtigungen({ benachrichtigungen }) {
   };
 
   return (
-    <div className="fixed top-4 right-4 flex flex-col gap-2 z-50">
+    <div className="fixed top-3 left-3 right-3 sm:top-4 sm:left-auto sm:right-4 flex flex-col items-end gap-1.5 sm:gap-2 z-50">
       {benachrichtigungen.map((b) => (
         <div
           key={b.id}
-          className={`${farben[b.farbe] ?? "bg-gray-700"} text-white px-4 py-3 rounded-xl shadow-lg text-sm font-medium animate-fade-in max-w-xs`}
+          className={`${farben[b.farbe] ?? "bg-gray-700"} text-white px-3 py-2 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl shadow-lg text-xs sm:text-sm font-medium animate-fade-in w-full sm:w-auto sm:max-w-xs`}
         >
           {b.text}
         </div>

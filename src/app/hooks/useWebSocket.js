@@ -77,6 +77,10 @@ export function useWebSocket(raumCode, spielerId, name) {
                     setCooldowns(nachricht.cooldowns);
                     break;
 
+                case "cooldown_update":
+                    setCooldowns(nachricht.cooldowns);
+                    break;
+
                 case "quirk_fehler":
                     zeigeBenachrichtigung(nachricht.nachricht, "rot");
                     break;
