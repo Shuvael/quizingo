@@ -14,6 +14,7 @@ export default function MobileSpielLayout({
   spiel,
   spielerId,
   zahlen,
+  modus,
   onNeustart,
 }) {
   const [blockadeOffen, setBlockadeOffen] = useState(false);
