@@ -97,54 +97,80 @@ export default function Home() {
         )}
 
         <div className="flex flex-col gap-4 w-full max-w-sm">
-          <input
-            value={spielerName}
-            onChange={(e) => setSpielerName(e.target.value)}
-            placeholder="Dein Name"
-            className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 w-full"
-          />
 
-          <ModusAuswahl
-            modus={modus}
-            timerSekunden={timerSekunden}
-            autoWeiter={autoWeiter}
-            onModusWahl={setModus}
-            onTimerWahl={setTimerSekunden}
-            onAutoWeiterWahl={setAutoWeiter}
-          />
-
-          <KategorieUndSpracheAuswahl
-            freigeschaltet={fortschritt.freigeschaltet}
-            gewaehlteKategorie={gewaehlteKategorie}
-            gewaehlteSprache={gewaehlteSprache}
-            onKategorieWahl={setGewaehlteKategorie}
-            onSpracheWahl={setGewaehlteSprache}
-          />
-
-          <button
-            onClick={raumErstellen}
-            disabled={!spielerName.trim()}
-            className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-4 rounded-xl font-bold text-lg transition"
-          >
-            Neuen Raum erstellen
-          </button>
-
-          <div className="flex gap-2">
+          {/* BEITRETEN – zuerst */}
+          <div className="bg-gray-800 border border-gray-700 rounded-xl p-4 flex flex-col gap-3">
+            <p className="text-gray-400 text-sm font-semibold">Raum beitreten</p>
             <input
-              value={eingabeCode}
-              onChange={(e) => setEingabeCode(e.target.value)}
-              placeholder="Raum-Code"
-              maxLength={4}
-              className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 flex-1 uppercase"
+              value={spielerName}
+              onChange={(e) => setSpielerName(e.target.value)}
+              placeholder="Dein Name"
+              className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 w-full"
             />
+            <div className="flex gap-2">
+              <input
+                value={eingabeCode}
+                onChange={(e) => setEingabeCode(e.target.value)}
+                placeholder="Raum-Code"
+                maxLength={4}
+                className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 flex-1 uppercase"
+              />
+              <button
+                onClick={raumBeitreten}
+                disabled={!spielerName.trim() || eingabeCode.length !== 4}
+                className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-3 rounded-lg transition font-semibold"
+              >
+                Beitreten
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-gray-700" />
+            <span className="text-gray-500 text-xs">oder neuen Raum erstellen</span>
+            <div className="flex-1 h-px bg-gray-700" />
+          </div>
+
+          {/* RAUM ERSTELLEN – darunter */}
+          <div className="bg-gray-800 border border-gray-700 rounded-xl p-4 flex flex-col gap-3">
+            <p className="text-gray-400 text-sm font-semibold">Neuen Raum erstellen</p>
+
+            {/* Name falls noch nicht eingegeben */}
+            {!spielerName.trim() && (
+              <input
+                value={spielerName}
+                onChange={(e) => setSpielerName(e.target.value)}
+                placeholder="Dein Name"
+                className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 w-full"
+              />
+            )}
+
+            <ModusAuswahl
+              modus={modus}
+              timerSekunden={timerSekunden}
+              autoWeiter={autoWeiter}
+              onModusWahl={setModus}
+              onTimerWahl={setTimerSekunden}
+              onAutoWeiterWahl={setAutoWeiter}
+            />
+
+            <KategorieUndSpracheAuswahl
+              freigeschaltet={fortschritt.freigeschaltet}
+              gewaehlteKategorie={gewaehlteKategorie}
+              gewaehlteSprache={gewaehlteSprache}
+              onKategorieWahl={setGewaehlteKategorie}
+              onSpracheWahl={setGewaehlteSprache}
+            />
+
             <button
-              onClick={raumBeitreten}
-              disabled={!spielerName.trim() || eingabeCode.length !== 4}
-              className="bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-3 rounded-lg transition"
+              onClick={raumErstellen}
+              disabled={!spielerName.trim()}
+              className="bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl font-bold transition"
             >
-              Beitreten
+              Raum erstellen
             </button>
           </div>
+
         </div>
       </main>
     );
